@@ -4,9 +4,16 @@ import 'package:logger/logger.dart';
 import 'MapPage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
+import 'package:mysql1/mysql1.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 //import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-void main() {
+void main() async
+{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -58,8 +65,24 @@ class _MyHomePageState extends State<MyHomePage> {
   Position? _currentLocation;
   bool startTrack = false;
   Timer? _timer;
+  
+
   // GoogleMapController? _controller;
   // List<Marker> _markers = [];
+
+  Future<void> saveLocationData(double latitude, double longitude) async 
+  {
+    // Get a reference to the Firestore collection
+    final CollectionReference locationCollection = FirebaseFirestore.instance.collection('locations');
+    
+    // Create a new document in the 'locations' collection
+    await locationCollection.add({
+      'latitude': latitude,
+      'longitude': longitude,
+      'time': DateTime.now(),
+    });
+  }
+
 
   void _openMapPage(BuildContext context) {
     Navigator.push(
@@ -75,6 +98,17 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _endTrip() async {
     startTrack = false;
     print('trip ended!');
+    // Get a reference to the 'locations' collection
+  final CollectionReference locationCollection = FirebaseFirestore.instance.collection('locations');
+  
+  // Query all documents in the collection and delete them
+  final QuerySnapshot querySnapshot = await locationCollection.get();
+  final List<QueryDocumentSnapshot> documents = querySnapshot.docs;
+  
+  // Delete each document in the collection
+  for (QueryDocumentSnapshot document in documents) {
+    await document.reference.delete();
+  }
   }
 
   Future<void> _startTrip(BuildContext context) async {
@@ -134,6 +168,13 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(() {
             _currentLocation = position;
             print("Current Location: $_currentLocation");
+            
+            saveLocationData(_currentLocation!.latitude, _currentLocation!.longitude);
+            //   _saveLocationData(
+            //     _currentLocation!.latitude,
+            //     _currentLocation!.longitude,
+            //   );
+            
           });
         });
       }
@@ -146,6 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // Cancel the timer when the widget is disposed
     // to prevent memory leaks
     _timer?.cancel();
+
   }
 
   @override
