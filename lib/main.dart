@@ -4,7 +4,6 @@ import 'package:logger/logger.dart';
 import 'MapPage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
-import 'package:mysql1/mysql1.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -67,9 +66,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Timer? _timer;
   
 
-  // GoogleMapController? _controller;
-  // List<Marker> _markers = [];
-
   Future<void> saveLocationData(double latitude, double longitude) async 
   {
     // Get a reference to the Firestore collection
@@ -84,18 +80,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
 
-  void _openMapPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => MapPage()),
-    );
-  }
+  // void _openMapPage(BuildContext context) {
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(builder: (context) => MapPage()),
+  //   );
+  // }
 
   Future<Position> _getCurrentLocation() async {
     return await Geolocator.getCurrentPosition();
   }
 
-  Future<void> _endTrip() async {
+  Future<void> _endTrip() async 
+  {
     startTrack = false;
     print('trip ended!');
     // Get a reference to the 'locations' collection
