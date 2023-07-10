@@ -1,52 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:logger/logger.dart';
+
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    // final Color customColor = Color.fromRGBO(0,34,72,255);
+    Map<int, Color> color =
+    {
+      50:const Color.fromRGBO (34,72,255, .1),
+      100:const Color.fromRGBO(34,72,255, .2),
+      200:const Color.fromRGBO(34,72,255, .3),
+      300:const Color.fromRGBO(34,72,255, .4),
+      400:const Color.fromRGBO(34,72,255, .5),
+      500:const Color.fromRGBO(34,72,255, .6),
+      600:const Color.fromRGBO(34,72,255, .7),
+      700:const Color.fromRGBO(34,72,255, .8),
+      800:const Color.fromRGBO(34,72,255, .9),
+      900:const Color.fromRGBO(34,72,255, 1),
+    };
+
+    MaterialColor colorCustom = MaterialColor(0xFF07264E, color);
+
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: colorCustom,
+        ),
+        // Other theme configurations
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Fleet system Demo Home Page'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+  const MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
 
@@ -55,11 +52,63 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  final Logger logger = Logger();
+
+  Future<void> _startTrip() async {
+    // Request location permission
+    PermissionStatus status = await Permission.location.request();
+    logger.d(status);
+    if (status.isGranted) {
+      // Permission granted, handle start trip logic here
+      logger.d('Start trip!');
+    } 
+    else if (status.isDenied || status.isPermanentlyDenied)
+    {
+      // Permission denied, handle accordingly (e.g., show a dialog)
+      // logger.d('Location permission denied');
+
+      bool openSettings = await showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Location Permission Required'),
+        content: const Text('Please grant location permission to start the trip.'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+
+    if (openSettings) {
+      // Open app settings
+      await openAppSettings();
+    }
+    else 
+      {
+        // Permission denied after requesting again, handle accordingly
+        logger.d('Location permission denied');
+      }
+    }
+
+    else 
+    {
+    // Handle other permission statuses
+    logger.d('other status');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(widget.title),
       ),
       body: Center(
@@ -70,11 +119,13 @@ class _MyHomePageState extends State<MyHomePage> {
               'Trip Status:',
             ),
             ElevatedButton(
-              onPressed: () async {
-                // Handle start trip button press
-              },
-              child: const Text('Start Trip'),
-            ),
+            onPressed: () {
+              logger.d("start trip is pressed!");
+              _startTrip();
+            },
+  child: const Text('Start Trip'),
+),
+
             ElevatedButton(
               onPressed: () {
                 // Handle end trip button press
